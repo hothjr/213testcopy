@@ -22,8 +22,8 @@
 #include "EEPROMstorage.h"
 #include "StepperErrorHandler.h"
 //// new: display
-#include "../lib/image_data.h"
-#include <Fonts/InterSemiBold24pt7b.h>
+#include "image_data.h"
+// #include <Fonts/InterSemiBold24pt7b.h>
 
 #include <GxEPD2_BW.h>
 GxEPD2_BW<GxEPD2_213_BN, GxEPD2_213_BN::HEIGHT> display(GxEPD2_213_BN(/*CS=D8*/ 2, /*DC=D3*/ 9, /*RST=D4*/ 8, /*BUSY=D2*/ 7)); // DEPG0213BN 122x250, SSD1680, TTGO T5 V2.4.1, V2.3.1
@@ -58,6 +58,13 @@ bool stepperErrorRequest = false;
 bool checkSensors = false;
 bool printSensors = false;
 
+//variables to save the values
+String warningValue = "water level";
+String connectionValue = "connected";
+String tempValue = "4";
+String modeValue = "parameter";
+String lightValue = "on";
+
 EEPROMstorage eeprom_led;
 int LED_r = 0;
 int LED_g = 0;
@@ -81,60 +88,93 @@ void setColor(uint32_t c)
 
 //functions
 
-void base() {
+void init_base() {
   display.setRotation(1);
   display.setTextColor(GxEPD_BLACK);
   display.setTextSize(2);
-  display.setFont(&Inter_SemiBold24pt7b);
+  // display.setFont(&Inter_SemiBold24pt7b);
   display.setFullWindow();
   display.firstPage();
   do
   {
     display.fillScreen(GxEPD_BLACK);
     display.drawInvertedBitmap(220, 0, divider_line, 76, 152, GxEPD_WHITE);
-    display.drawInvertedBitmap(8, 8, network_connected, 30, 30, GxEPD_WHITE);
-    display.drawInvertedBitmap(8, 114, warning_door, 30, 30, GxEPD_RED);
-    display.drawInvertedBitmap(243, 23, mode_eco, 30, 30, GxEPD_WHITE);
-    display.drawInvertedBitmap(243, 99, lighting_off, 30, 30, GxEPD_WHITE);
-    display.drawInvertedBitmap(266, 23, base_arrow, 30, 30, GxEPD_WHITE);
-    display.drawInvertedBitmap(266, 99, base_arrow, 30, 30, GxEPD_WHITE);
-    display.drawCircle(166, 42, 8, GxEPD_WHITE);
-    display.setCursor(150, 56);
-    display.print("C");   
+    display.drawInvertedBitmap(12, 12, tick, 30, 30, GxEPD_WHITE);
+    display.drawInvertedBitmap(12, 110, tick, 30, 30, GxEPD_RED);
+    display.drawInvertedBitmap(243, 23, tick, 30, 30, GxEPD_WHITE);
+    display.drawInvertedBitmap(243, 99, tick, 30, 30, GxEPD_WHITE);
+    display.drawInvertedBitmap(276, 23, arrow, 30, 30, GxEPD_WHITE);
+    display.drawInvertedBitmap(276, 99, arrow, 30, 30, GxEPD_WHITE);
+    display.drawInvertedBitmap(174, 54, c_symbol, 34, 34, GxEPD_WHITE);
+
+    // display.drawCircle(166, 42, 8, GxEPD_WHITE);
+    // display.setCursor(150, 56);
+    // display.print("C");   
   }
   while(display.nextPage());
 }
 
+void base_with_parameters() {
+  display.setRotation(1);
+  display.setTextColor(GxEPD_BLACK);
+  display.setTextSize(2);
+  // display.setFont(&Inter_SemiBold24pt7b);
+  display.setFullWindow();
+  display.firstPage();
+  do
+  {
+  if (modeValue == "eco") {
+    display.drawInvertedBitmap(243, 23, eco, 30, 30, GxEPD_WHITE);
+  }
+    }
+  while(display.nextPage());
+}
 void mode(String m)
 {
-  display.setPartialWindow(132, 23, 30, 30);
-  display.firstPage();
-  do{
-    // base();
-    // display.fillScreen(GxEPD_BLACK);
-    display.fillRect(130, 23, 30, 30, GxEPD_WHITE);
-    if (m == "eco") {
-      Serial.println("eco");
-      display.drawInvertedBitmap(130, 23, mode_eco, 30, 30, GxEPD_WHITE);
-    }
-    else if (m == "parameter") {
-      Serial.println("mode_parameter_run");
-      display.drawInvertedBitmap(130, 23, mode_parameter_run, 30, 30, GxEPD_WHITE);
-    }
-    else if (m == "sleep") {
-      Serial.println("sleep");
-      display.drawInvertedBitmap(130, 23, mode_sleep, 30, 30, GxEPD_WHITE);
-    }
-    else if (m == "run") {
-      Serial.println("run");
-      // display.drawInvertedBitmap(130, 23, mode_run, 30, 30, GxEPD_WHITE);
-    }
-    else if (m == "manual") {
-      Serial.println("manual");
-      display.drawInvertedBitmap(130, 23, mode_manual, 30, 30, GxEPD_WHITE);
-    }
-    delay(500);
-  } while(display.nextPage());
+  if (m == "eco") {
+    modeValue = "eco";
+  }
+  else if (m == "parameter") {
+    modeValue = "parameter";
+  }
+  else if (m == "sleep") {
+    modeValue = "sleep";
+  }
+  else if (m == "run") {
+    modeValue = "run";
+  }
+  else if (m == "manual") {
+    modeValue = "run";
+  }
+  
+  // display.setPartialWindow(132, 23, 30, 30);
+  // display.firstPage();
+  // do{
+  //   // base();
+  //   // display.fillScreen(GxEPD_BLACK);
+  //   display.fillRect(130, 23, 30, 30, GxEPD_WHITE);
+  //   if (m == "eco") {
+  //     Serial.println("eco");
+  //     display.drawInvertedBitmap(130, 23, eco, 30, 30, GxEPD_WHITE);
+  //   }
+  //   else if (m == "parameter") {
+  //     Serial.println("mode_parameter_run");
+  //     display.drawInvertedBitmap(130, 23, parameter_run, 30, 30, GxEPD_WHITE);
+  //   }
+  //   else if (m == "sleep") {
+  //     Serial.println("sleep");
+  //     display.drawInvertedBitmap(130, 23, sleep, 30, 30, GxEPD_WHITE);
+  //   }
+  //   else if (m == "run") {
+  //     Serial.println("run");
+  //     // display.drawInvertedBitmap(130, 23, mode_run, 30, 30, GxEPD_WHITE);
+  //   }
+  //   else if (m == "manual") {
+  //     Serial.println("manual");
+  //     display.drawInvertedBitmap(130, 23, manual, 30, 30, GxEPD_WHITE);
+  //   }
+  //   delay(500);
+  // } while(display.nextPage());
 }
 
 void warning(String m)
@@ -145,89 +185,100 @@ void warning(String m)
     display.fillScreen(GxEPD_BLACK);
     if (m == "environment") {
       Serial.println("warning_environment_temp");
-      display.drawInvertedBitmap(8, 90, warning_environment_temp, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, environment, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_environment_temp, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, environment, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_environment_temp, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, environment, 30, 30, GxEPD_WHITE);
       delay(3000);
     }
     else if (m == "general") {
       Serial.println("general");
-      display.drawInvertedBitmap(8, 90, warning_general, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, general, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_general, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, general, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_general, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, general, 30, 30, GxEPD_WHITE);
       delay(3000);
     }
     else if (m == "door") {
       Serial.println("door is open");
-      display.drawInvertedBitmap(8, 90, warning_door, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, door, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_door, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, door, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_door, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, door, 30, 30, GxEPD_WHITE);
       delay(3000);
     }
     else if (m == "pressure") {
       Serial.println("pressure");
-      display.drawInvertedBitmap(8, 90, warning_pressure, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, pressure, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_pressure, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, pressure, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_pressure, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, pressure, 30, 30, GxEPD_WHITE);
       delay(3000);
     }
     else if (m == "water level") {
       Serial.println("general");
-      display.drawInvertedBitmap(8, 90, warning_water_level, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, water_level, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_water_level, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, water_level, 30, 30, GxEPD_WHITE);
       delay(300);
       display.drawRect(8, 90, 30, 30, GxEPD_BLACK);
       delay(200);
-      display.drawInvertedBitmap(8, 90, warning_water_level, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 90, water_level, 30, 30, GxEPD_WHITE);
       delay(3000);
     }
     delay(50);
   } while(display.nextPage());
 }
-
+void wifi_connection(String m) {
+  String connected_compare = "connected"; //creating a String "connected" to be able to compare it with the input data (input is a String)
+  if (m == connected_compare) {
+    display.fillRoundRect(127, 8, 55.5, 32.6, 10, GxEPD_WHITE); //draw a filled round rectangle
+    display.drawBitmap(143, 12, connected, 25, 25, GxEPD_BLACK); //draw the wifi icon inside
+  }
+  else {
+    display.fillRoundRect(127, 8, 55.5, 32.6, 10, GxEPD_BLACK); //draw a filled round rectangle
+    display.drawRoundRect(127, 8, 55.5, 32.6, 10, GxEPD_WHITE); //draw a white border around the rectangle
+    display.drawBitmap(143, 12, disconnected, 25, 25, GxEPD_WHITE); //draw the no wifi icon inside
+  }
+}
 void connection(String m)
 {
-  display.setPartialWindow(8, 8, 30, 30);
+  // display.setPartialWindow(8, 8, 30, 30);
   display.firstPage();
   do{
-    display.fillScreen(GxEPD_BLACK);
+  //   display.fillScreen(GxEPD_BLACK);
     if (m == "connected") {
       Serial.println("connected");
-      display.drawInvertedBitmap(8, 8, network_connected, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 8, connected, 30, 30, GxEPD_WHITE);
     }
     else {
       Serial.println("no connection");
-      display.drawInvertedBitmap(8, 8, network_connected, 30, 30, GxEPD_WHITE);
-      display.drawInvertedBitmap(8, 8, network_disconnected, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 8, connected, 30, 30, GxEPD_WHITE);
+      display.drawInvertedBitmap(8, 8, disconnected, 30, 30, GxEPD_WHITE);
     }
-    delay(50);
+  //   delay(50);
   } while(display.nextPage()); 
 }
 
@@ -241,10 +292,10 @@ void light(String m)
     display.fillScreen(GxEPD_BLACK);
     if (m == "on") {
       Serial.println("light on");
-      display.drawBitmap(130, 90, lighting_on, 30, 30, GxEPD_WHITE);
+      display.drawBitmap(130, 90, light_on, 30, 30, GxEPD_WHITE);
     } else {
       Serial.println("light off");
-      display.drawBitmap(130, 90, lighting_off, 30, 30, GxEPD_WHITE);
+      display.drawBitmap(130, 90, light_off, 30, 30, GxEPD_WHITE);
     }
     delay(50);
   }
@@ -255,7 +306,7 @@ void temp(String m) {
   display.setPartialWindow(64, 21, 92, 110);
   display.firstPage();
   do{
-    display.setFont(&Inter_SemiBold24pt7b);
+    // display.setFont(&Inter_SemiBold24pt7b);
     // display.setRotation(1);
     display.fillScreen(GxEPD_BLACK);
     display.setCursor(64, 110);
@@ -295,7 +346,7 @@ void helloWorld()
   //Serial.println("helloWorld");
   coordinates cursor;
   display.setRotation(1);
-  display.setFont(&Inter_SemiBold24pt7b);
+  // display.setFont(&Inter_SemiBold24pt7b);
   if (display.epd2.WIDTH < 104) display.setFont(0);
   display.setTextColor(GxEPD_BLACK);
   int16_t tbx, tby; uint16_t tbw, tbh;
@@ -333,7 +384,7 @@ void showPartialUpdate()
   valueParameters.cursor_y = valueParameters.y + valueParameters.h - 6;
   float value = 13.95;
   uint16_t incr = display.epd2.hasFastPartialUpdate ? 1 : 3;
-  display.setFont(&Inter_SemiBold24pt7b);
+  // display.setFont(&Inter_SemiBold24pt7b);
   display.setTextColor(GxEPD_BLACK);
   // show where the update box is
   for (uint16_t r = 0; r < 4; r++)
@@ -354,17 +405,29 @@ void showPartialUpdate()
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(250000);
   while (!Serial);
  
   Serial.println("Adafruit MAX31865 PT100 Sensor Test!");
-  display.init(115200, true, 2, false);
-  display.setRotation(1);
+  display.init(250000, true, 2, false);
+  // display.setRotation(1);
 
-  display.fillScreen(GxEPD_BLACK);
-  display.display();
-  delay(500);
-  showPartialUpdate();
+  // display.fillScreen(GxEPD_BLACK);
+  // display.display();
+  // delay(500);
+  // base();
+  init_base();
+  // wifi_connection("connected");
+  // display.firstPage();
+  // display.setPartialWindow(115, 50, 50, 40);
+  // display.fillScreen(GxEPD_BLACK);
+  // do{
+    
+  //   display.setCursor(120, 80);
+  //   display.print(millis());
+  //   display.drawBitmap(12, 12, disconnected, 30, 30, GxEPD_WHITE);
+  // } while(display.nextPage());
+  // showPartialUpdate();
   // Timer 0 and 1 for hardware PWM
   // Set the PWM frequency for hardware PWM pins (pins 3 and 6)
   // TCA0.SINGLE.CTRLA = 0b00000100; // Enable TCA0, single-slope PWM
@@ -614,11 +677,40 @@ void serialEvent()
     Serial.println("message is");
     Serial.println(SerialBuffer);
     mode(SerialBuffer);
+    base_with_parameters();
     break;
   case 'C':
     Serial.println("message is");
     Serial.println(SerialBuffer);
-    connection(SerialBuffer);
+    // wifi_connection(SerialBuffer);
+    // connection(SerialBuffer);
+    //code with drawpaged
+    display.setPartialWindow(12, 12, 30, 30);
+    ShowBoxParameters boxParameters{12, 12, 30, 30, GxEPD_WHITE};
+    ShowValueParameters valueParameters{12, 12, 30, 30, 0, 13.95};
+    // display.fillScreen(GxEPD_BLACK);
+    boxParameters.color = GxEPD_BLACK;
+    display.drawPaged(showBoxCallback, &boxParameters);
+    delay(2000);
+    boxParameters.color = GxEPD_WHITE;
+    display.drawPaged(showBoxCallback, &boxParameters);
+    // while (display.nextPage());
+    delay(1000);
+    // display.setPartialWindow(12, 12, 30, 30);
+    // // display.firstPage();
+    // // do{
+    //   display.fillScreen(GxEPD_BLACK);
+    //   if (SerialBuffer == "connected") {
+    //     Serial.println("connected");
+    //     display.drawInvertedBitmap(12, 12, connected, 30, 30, GxEPD_WHITE);
+    //   }
+    //   else {
+    //     Serial.println("no connection");
+    //     display.drawInvertedBitmap(12, 12, connected, 30, 30, GxEPD_WHITE);
+    //     display.drawInvertedBitmap(12, 12, disconnected, 30, 30, GxEPD_WHITE);
+    //   }
+    //   delay(50);
+    // // } while(display.nextPage()); 
     break;
   case 'E':
     Serial.println("message is");
